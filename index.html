@@ -1,0 +1,402 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Geometry Proof Review Board</title>
+<style>
+:root{
+--navy:#0f2d44;--blue:#2f80a8;--green:#3ca65c;--yellow:#f2b705;--purple:#9c64a6;--red:#c0392b;
+--ltblue:#f0f7fb;--ltgreen:#eefaf1;--ltyellow:#fff8e6;--ltred:#fdecea;--gray:#d6e6ef;--text:#1f2933;
+}
+body{font-family:Arial,sans-serif;background:#f0f7fb;color:var(--text);margin:0;padding:20px}
+.container{max-width:1100px;margin:0 auto}
+.hero{background:var(--navy);color:white;padding:24px;border-radius:12px;text-align:center}
+.card{background:white;border-left:6px solid var(--blue);padding:18px;border-radius:10px;margin-top:18px}
+.green{background:var(--ltgreen);border-left-color:var(--green)}
+.yellow{background:var(--ltyellow);border-left-color:var(--yellow)}
+.red{background:var(--ltred);border-left-color:var(--red)}
+.purple{background:#f3e5f5;border-left-color:var(--purple)}
+button{background:var(--navy);color:white;border:none;padding:11px 16px;border-radius:8px;cursor:pointer;margin:6px;font-size:15px}
+button:hover{background:#163d5c}
+button.secondary{background:#2f80a8}
+.grid{display:grid;grid-template-columns:1fr 1.25fr;gap:18px}
+@media(max-width:900px){.grid{grid-template-columns:1fr}}
+.diagram{background:white;border:1px solid var(--gray);border-radius:10px;text-align:center;padding:10px;overflow-x:auto}
+svg{max-width:100%;height:auto}
+table{width:100%;border-collapse:collapse;margin-top:10px;background:white}
+th{background:var(--navy);color:white}
+th,td{border:1px solid var(--gray);padding:9px;vertical-align:middle}
+tr:nth-child(even){background:#f6f9fb}
+.review-row{cursor:pointer}
+.review-row.selected{background:#fff8e6!important;outline:3px solid var(--yellow)}
+.feedback{display:none;padding:14px;border-radius:8px;margin-top:12px;font-weight:bold}
+.feedback.correct{display:block;background:var(--ltgreen);color:#1f6b35;border-left:6px solid var(--green)}
+.feedback.incorrect{display:block;background:var(--ltred);color:#8a1f11;border-left:6px solid var(--red)}
+select{width:100%;padding:8px;border-radius:6px;border:1px solid #b8c7d1;font-size:15px;margin-top:6px}
+.hidden{display:none}
+.badge{display:inline-block;background:#fff8e6;border:2px solid #f2b705;border-radius:999px;padding:8px 14px;margin:4px;font-weight:bold;color:#0f2d44}
+.progress{background:#d6e6ef;border-radius:999px;height:18px;overflow:hidden;margin-top:12px}
+.progress-bar{background:#3ca65c;height:100%;width:0%;transition:.4s}
+.code{background:var(--navy);color:white;padding:12px 18px;border-radius:8px;display:inline-block;font-size:22px}
+</style>
+</head>
+
+<body>
+<div class="container">
+
+<section id="start">
+<div class="hero">
+<h1>🏛️ Geometry Proof Review Board</h1>
+<p>Review special triangle proofs. Approve valid reasoning. Repair flawed logic.</p>
+</div>
+
+<div class="card">
+<h2 style="color:#0f2d44;margin-top:0;">Your Role</h2>
+<p>You are a member of the <strong>Geometry Proof Review Board</strong>.</p>
+<p>You will review five proof investigations involving isosceles triangles, equilateral triangles, HL, CPCTC, and mixed proof reasoning.</p>
+<p>For each case, decide whether the proof is valid or needs revision. If it needs revision, identify the first incorrect step and choose the correct repair.</p>
+<button onclick="startActivity()">Begin Review</button>
+</div>
+</section>
+
+<section id="review" class="hidden">
+<div class="hero">
+<h1 id="caseTitle">Case File</h1>
+<p id="caseSubtitle"></p>
+<div class="progress"><div class="progress-bar" id="progressBar"></div></div>
+<p id="scoreText" style="margin-bottom:0;"></p>
+</div>
+
+<div class="grid">
+<div>
+<div class="card">
+<h2 style="color:#0f2d44;margin-top:0;">Diagram</h2>
+<div class="diagram" id="diagram"></div>
+</div>
+<div class="card yellow">
+<h3 style="color:#0f2d44;margin-top:0;">Review Task</h3>
+<p id="taskText"></p>
+<button class="secondary" onclick="showHint()">Show One Hint</button>
+<div id="hintBox" class="feedback"></div>
+</div>
+</div>
+
+<div>
+<div class="card">
+<h2 style="color:#0f2d44;margin-top:0;">Proof Submission</h2>
+<div id="proofTable"></div>
+<div id="controls"></div>
+<div id="feedback" class="feedback"></div>
+</div>
+</div>
+</div>
+</section>
+
+<section id="finish" class="hidden">
+<div class="hero">
+<h1>🏆 Review Complete</h1>
+<p>You have completed the Geometry Proof Review Board.</p>
+</div>
+<div class="card green" style="text-align:center;">
+<h2 style="color:#0f2d44;">Final Score</h2>
+<p id="finalScore"></p>
+<p class="code">W4-PROOF-BOARD</p>
+<p>Write this completion code down if your teacher asks for it.</p>
+<button onclick="location.reload()">Restart Activity</button>
+</div>
+</section>
+
+</div>
+
+<script>
+const cases = [
+{
+title:"Investigation 1: Isosceles Triangle Theorem",
+subtitle:"Review a proof that uses a constructed angle bisector.",
+type:"isosceles",
+task:"Choose the missing reason that completes the proof.",
+mode:"missing",
+hint:"The missing step proves the two smaller triangles congruent using two sides and the included angle.",
+rows:[
+["AB ≅ AC","Given"],
+["Construct angle bisector AD.","Construction"],
+["∠BAD ≅ ∠CAD","Definition of Angle Bisector"],
+["AD ≅ AD","Reflexive Property"],
+["△ABD ≅ △ACD","_____"],
+["∠B ≅ ∠C","CPCTC"]
+],
+answer:"SAS",
+question:"What reason belongs in Step 5?",
+choices:["SSS","SAS","ASA","HL","CPCTC"]
+},
+{
+title:"Investigation 2: Converse of the Isosceles Triangle Theorem",
+subtitle:"Find the first incorrect reason.",
+type:"converse",
+task:"Select the incorrect row, then choose the correct reason.",
+mode:"repair",
+hint:"The proof starts with congruent base angles and concludes congruent opposite sides.",
+rows:[
+["∠B ≅ ∠C","Given"],
+["AB ≅ AC","Isosceles Triangle Theorem"]
+],
+badRow:1,
+repair:"Converse of the Isosceles Triangle Theorem",
+choices:["Given","Isosceles Triangle Theorem","Converse of the Isosceles Triangle Theorem","CPCTC"]
+},
+{
+title:"Investigation 3: Equilateral Triangle Proof",
+subtitle:"Complete the logic that explains why each angle is 60°.",
+type:"equilateral",
+task:"Choose the final missing conclusion.",
+mode:"missing",
+hint:"First prove all angles are congruent. Then use the fact that the angle measures add to 180°.",
+rows:[
+["AB ≅ BC ≅ AC","Given"],
+["△ABC is equilateral","Definition of Equilateral Triangle"],
+["∠A ≅ ∠B ≅ ∠C","Equilateral triangles are equiangular"],
+["m∠A + m∠B + m∠C = 180°","Triangle Angle Sum Theorem"],
+["m∠A = m∠B = m∠C = _____","Because the three angles are congruent"]
+],
+answer:"60°",
+question:"What value completes Step 5?",
+choices:["30°","45°","60°","90°","180°"]
+},
+{
+title:"Investigation 4: Hypotenuse-Leg Proof",
+subtitle:"Decide which congruence theorem is justified.",
+type:"hl",
+task:"Choose the theorem that proves the right triangles congruent.",
+mode:"missing",
+hint:"The diagram gives right triangles, congruent hypotenuses, and one pair of congruent legs.",
+rows:[
+["△ABC and △DEF are right triangles.","Given"],
+["AB ≅ DE","Given"],
+["AC ≅ DF","Given"],
+["△ABC ≅ △DEF","_____"],
+["BC ≅ EF","CPCTC"]
+],
+answer:"HL",
+question:"What reason belongs in Step 4?",
+choices:["SSA","AAA","SAS","HL","AAS"]
+},
+{
+title:"Investigation 5: Mixed Proof Challenge",
+subtitle:"Find the first incorrect step in a multi-step proof.",
+type:"mixed",
+task:"Select the first incorrect row and choose the correct repair.",
+mode:"repair",
+hint:"Before using CPCTC, the proof must first prove the triangles congruent.",
+rows:[
+["AB ≅ AC","Given"],
+["AD bisects ∠A","Given"],
+["∠BAD ≅ ∠CAD","Definition of Angle Bisector"],
+["AD ≅ AD","Reflexive Property"],
+["BD ≅ DC","CPCTC"],
+["△ABD ≅ △ACD","SAS"]
+],
+badRow:4,
+repair:"Move △ABD ≅ △ACD by SAS before using CPCTC",
+choices:[
+"Use HL instead of CPCTC",
+"Move △ABD ≅ △ACD by SAS before using CPCTC",
+"Use Converse of the Isosceles Triangle Theorem",
+"Use Triangle Angle Sum Theorem"
+]
+}
+];
+
+let current=0;
+let score=0;
+let selectedRow=null;
+
+function startActivity(){
+document.getElementById("start").classList.add("hidden");
+document.getElementById("review").classList.remove("hidden");
+loadCase();
+}
+
+function loadCase(){
+selectedRow=null;
+const c=cases[current];
+document.getElementById("caseTitle").textContent=c.title;
+document.getElementById("caseSubtitle").textContent=c.subtitle;
+document.getElementById("taskText").textContent=c.task;
+document.getElementById("diagram").innerHTML=diagram(c.type);
+renderTable(c);
+renderControls(c);
+hideFeedback();
+document.getElementById("hintBox").style.display="none";
+document.getElementById("hintBox").innerHTML="";
+updateProgress();
+}
+
+function updateProgress(){
+document.getElementById("progressBar").style.width=(current/cases.length*100)+"%";
+document.getElementById("scoreText").textContent="Score: "+score+" stars";
+}
+
+function renderTable(c){
+let html=`<table><tr><th>#</th><th>Statement</th><th>Reason</th></tr>`;
+c.rows.forEach((r,i)=>{
+html+=`<tr id="row${i}" class="${c.mode==='repair'?'review-row':''}" onclick="${c.mode==='repair'?`selectRow(${i})`:''}">
+<td>${i+1}</td><td>${r[0]}</td><td>${r[1]}</td></tr>`;
+});
+html+=`</table>`;
+document.getElementById("proofTable").innerHTML=html;
+}
+
+function renderControls(c){
+let html="";
+if(c.mode==="missing"){
+html+=`<p><strong>${c.question}</strong></p><select id="answerChoice"><option value="">Choose...</option>`;
+c.choices.forEach(x=>html+=`<option>${x}</option>`);
+html+=`</select><button onclick="submitMissing()">Submit Review</button>`;
+}else{
+html+=`<p><strong>1.</strong> Click the first incorrect row in the proof.</p>`;
+html+=`<p><strong>2.</strong> What correction should be made?</p><select id="repairChoice"><option value="">Choose...</option>`;
+c.choices.forEach(x=>html+=`<option>${x}</option>`);
+html+=`</select><button onclick="submitRepair()">Submit Review</button>`;
+}
+document.getElementById("controls").innerHTML=html;
+}
+
+function selectRow(i){
+selectedRow=i;
+document.querySelectorAll(".review-row").forEach(r=>r.classList.remove("selected"));
+document.getElementById("row"+i).classList.add("selected");
+}
+
+function submitMissing(){
+const c=cases[current];
+const choice=document.getElementById("answerChoice").value;
+const f=document.getElementById("feedback");
+f.style.display="block";
+if(choice===c.answer){
+score+=3;
+f.className="feedback correct";
+f.innerHTML="✅ Approved. Your review is correct.";
+setTimeout(nextCase,1200);
+}else{
+f.className="feedback incorrect";
+f.innerHTML="🔎 Not quite. Review the evidence and choose the theorem or conclusion that matches the proof.";
+}
+}
+
+function submitRepair(){
+const c=cases[current];
+const repair=document.getElementById("repairChoice").value;
+const f=document.getElementById("feedback");
+f.style.display="block";
+if(selectedRow===null || !repair){
+f.className="feedback incorrect";
+f.innerHTML="Select the first incorrect row and choose a correction.";
+return;
+}
+if(selectedRow===c.badRow && repair===c.repair){
+score+=3;
+f.className="feedback correct";
+f.innerHTML="✅ Revision identified. Excellent proof review.";
+setTimeout(nextCase,1200);
+}else{
+f.className="feedback incorrect";
+f.innerHTML="🔎 Not quite. Look for the first place where the proof's logic is no longer justified.";
+}
+}
+
+function nextCase(){
+current++;
+if(current>=cases.length){
+finish();
+}else{
+loadCase();
+}
+}
+
+function finish(){
+document.getElementById("review").classList.add("hidden");
+document.getElementById("finish").classList.remove("hidden");
+document.getElementById("progressBar").style.width="100%";
+document.getElementById("finalScore").innerHTML=`You earned <strong>${score} out of ${cases.length*3}</strong> stars.`;
+}
+
+function showHint(){
+const c=cases[current];
+const h=document.getElementById("hintBox");
+h.className="feedback correct";
+h.style.display="block";
+h.innerHTML="💡 "+c.hint;
+}
+
+function hideFeedback(){
+const f=document.getElementById("feedback");
+f.style.display="none";
+f.className="feedback";
+f.innerHTML="";
+}
+
+function diagram(type){
+if(type==="isosceles"||type==="mixed") return `
+<svg width="520" height="360" viewBox="0 0 520 360" role="img" aria-label="Isosceles triangle proof diagram">
+<rect width="520" height="360" fill="#fff"/>
+<polygon points="260,55 100,290 420,290" fill="#fff" stroke="#111" stroke-width="4"/>
+<line x1="260" y1="55" x2="260" y2="290" stroke="#111" stroke-width="4"/>
+<text x="252" y="42" font-size="22" font-weight="bold">A</text>
+<text x="78" y="315" font-size="22" font-weight="bold">B</text>
+<text x="424" y="315" font-size="22" font-weight="bold">C</text>
+<text x="266" y="315" font-size="22" font-weight="bold">D</text>
+<line x1="174" y1="165" x2="190" y2="174" stroke="#2f80a8" stroke-width="4"/>
+<line x1="330" y1="174" x2="346" y2="165" stroke="#2f80a8" stroke-width="4"/>
+<path d="M246 78 A35 35 0 0 0 224 107" fill="none" stroke="#c0392b" stroke-width="4"/>
+<path d="M274 78 A35 35 0 0 1 296 107" fill="none" stroke="#c0392b" stroke-width="4"/>
+</svg>`;
+
+if(type==="converse") return `
+<svg width="520" height="360" viewBox="0 0 520 360" role="img" aria-label="Converse isosceles proof diagram">
+<rect width="520" height="360" fill="#fff"/>
+<polygon points="260,55 100,290 420,290" fill="#fff" stroke="#111" stroke-width="4"/>
+<text x="252" y="42" font-size="22" font-weight="bold">A</text>
+<text x="78" y="315" font-size="22" font-weight="bold">B</text>
+<text x="424" y="315" font-size="22" font-weight="bold">C</text>
+<path d="M122 285 A45 45 0 0 1 147 250" fill="none" stroke="#c0392b" stroke-width="4"/>
+<path d="M398 285 A45 45 0 0 0 373 250" fill="none" stroke="#c0392b" stroke-width="4"/>
+</svg>`;
+
+if(type==="equilateral") return `
+<svg width="520" height="360" viewBox="0 0 520 360" role="img" aria-label="Equilateral triangle proof diagram">
+<rect width="520" height="360" fill="#fff"/>
+<polygon points="260,55 110,300 410,300" fill="#fff" stroke="#111" stroke-width="4"/>
+<text x="252" y="42" font-size="22" font-weight="bold">A</text>
+<text x="88" y="325" font-size="22" font-weight="bold">B</text>
+<text x="414" y="325" font-size="22" font-weight="bold">C</text>
+<line x1="175" y1="175" x2="190" y2="185" stroke="#2f80a8" stroke-width="4"/>
+<line x1="330" y1="185" x2="345" y2="175" stroke="#2f80a8" stroke-width="4"/>
+<line x1="252" y1="300" x2="252" y2="284" stroke="#2f80a8" stroke-width="4"/>
+<path d="M245 78 A32 32 0 0 0 275 78" fill="none" stroke="#c0392b" stroke-width="4"/>
+<path d="M132 292 A40 40 0 0 1 155 255" fill="none" stroke="#c0392b" stroke-width="4"/>
+<path d="M388 292 A40 40 0 0 0 365 255" fill="none" stroke="#c0392b" stroke-width="4"/>
+</svg>`;
+
+if(type==="hl") return `
+<svg width="520" height="360" viewBox="0 0 520 360" role="img" aria-label="HL proof diagram">
+<rect width="520" height="360" fill="#fff"/>
+<polygon points="80,285 230,285 80,105" fill="#fff" stroke="#111" stroke-width="4"/>
+<polygon points="300,285 450,285 300,105" fill="#fff" stroke="#111" stroke-width="4"/>
+<rect x="80" y="265" width="20" height="20" fill="none" stroke="#111" stroke-width="3"/>
+<rect x="300" y="265" width="20" height="20" fill="none" stroke="#111" stroke-width="3"/>
+<text x="65" y="100" font-size="22" font-weight="bold">A</text>
+<text x="235" y="305" font-size="22" font-weight="bold">B</text>
+<text x="58" y="305" font-size="22" font-weight="bold">C</text>
+<text x="285" y="100" font-size="22" font-weight="bold">D</text>
+<text x="455" y="305" font-size="22" font-weight="bold">E</text>
+<text x="278" y="305" font-size="22" font-weight="bold">F</text>
+<line x1="142" y1="185" x2="155" y2="174" stroke="#2f80a8" stroke-width="4"/>
+<line x1="362" y1="185" x2="375" y2="174" stroke="#2f80a8" stroke-width="4"/>
+<line x1="150" y1="285" x2="150" y2="269" stroke="#3ca65c" stroke-width="4"/>
+<line x1="370" y1="285" x2="370" y2="269" stroke="#3ca65c" stroke-width="4"/>
+</svg>`;
+}
+</script>
+</body>
+</html>
